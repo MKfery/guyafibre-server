@@ -81,9 +81,9 @@ export class DevisService {
 
     const where: any = {};
 
-    if (status) where.status = status;
+    if (status) where.status = status.toUpperCase();
     if (location) where.location = { contains: location, mode: 'insensitive' };
-    if (urgency) where.urgency = urgency;
+    if (urgency) where.urgency = urgency.toUpperCase();
     if (search) {
       where.OR = [
         { reference: { contains: search, mode: 'insensitive' } },
@@ -255,9 +255,9 @@ export class DevisService {
     const { status, location, urgency, startDate, endDate } = query;
 
     const where: any = {};
-    if (status) where.status = status;
+    if (status) where.status = status.toUpperCase();
     if (location) where.location = { contains: location, mode: 'insensitive' };
-    if (urgency) where.urgency = urgency;
+    if (urgency) where.urgency = urgency.toUpperCase();
     if (startDate || endDate) {
       where.createdAt = {};
       if (startDate) where.createdAt.gte = new Date(startDate);
