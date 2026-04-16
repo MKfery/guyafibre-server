@@ -17,25 +17,8 @@ async function bootstrap() {
 
   // CORS
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-  const allowedOrigins = [
-    frontendUrl,
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'https://guya-two.vercel.app',
-    'https://guyafibre.com',
-    'https://www.guyafibre.com',
-  ].filter(Boolean);
-
   app.enableCors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, Postman)
-      if (!origin) return callback(null, true);
-      // Allow any vercel.app preview deploy for this project
-      if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error(`CORS bloqué pour l'origine: ${origin}`), false);
-    },
+    origin: frontendUrl,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
