@@ -57,7 +57,7 @@ export class MediasController {
     return this.mediasService.findAll({ page, limit, folder, search });
   }
 
-  @Get(':filename')
+  @Get('file/:filename')
   @ApiOperation({ summary: 'Servir un fichier (public)' })
   async getFile(@Param('filename') filename: string, @Res() res: Response) {
     const { stream, mimeType } = await this.mediasService.getFile(filename);

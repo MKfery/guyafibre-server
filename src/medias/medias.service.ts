@@ -87,7 +87,7 @@ export class MediasService {
 
     // Thumbnail uniquement pour les images
     const isImage = file.mimetype.startsWith('image/');
-    const thumbnailUrl = isImage ? `/api/medias/${filename}` : null;
+    const thumbnailUrl = isImage ? `/api/medias/file/${filename}` : null;
 
     const media = await this.prisma.media.create({
       data: {
@@ -95,7 +95,7 @@ export class MediasService {
         originalName: file.originalname,
         mimeType: file.mimetype,
         size: file.size,
-        url: `/api/medias/${filename}`,
+        url: `/api/medias/file/${filename}`,
         thumbnailUrl,
         folder,
         uploadedById: userId,
