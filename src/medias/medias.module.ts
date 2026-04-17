@@ -10,7 +10,7 @@ import { LogsModule } from '../logs/logs.module';
     PrismaModule,
     LogsModule,
     MulterModule.register({
-      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+      limits: { fileSize: 100 * 1024 * 1024 }, // 100MB — images, vidéos, documents
     }),
   ],
   controllers: [MediasController],
