@@ -222,6 +222,9 @@ model Contact {
   name      String
   email     String
   phone     String?
+  address   String?
+  postalCode String?
+  city      String?
   subject   String
   message   String   @db.Text
   isRead    Boolean  @default(false)

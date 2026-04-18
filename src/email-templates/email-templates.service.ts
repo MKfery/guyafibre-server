@@ -63,11 +63,14 @@ const DEFAULT_TEMPLATES = [
 <p><strong>Nom:</strong> {{name}}</p>
 <p><strong>Email:</strong> {{email}}</p>
 <p><strong>Téléphone:</strong> {{phone}}</p>
+<p><strong>Adresse:</strong> {{address}}</p>
+<p><strong>Code postal:</strong> {{postalCode}}</p>
+<p><strong>Ville:</strong> {{city}}</p>
 <p><strong>Sujet:</strong> {{subject}}</p>
 <p><strong>Message:</strong></p>
 <p>{{message}}</p>`,
-    bodyText: `Nouveau message de contact\n\nRéférence: {{reference}}\nNom: {{name}}\nEmail: {{email}}\nTéléphone: {{phone}}\nSujet: {{subject}}\n\nMessage:\n{{message}}`,
-    variables: ['reference', 'name', 'email', 'phone', 'subject', 'message'],
+    bodyText: `Nouveau message de contact\n\nRéférence: {{reference}}\nNom: {{name}}\nEmail: {{email}}\nTéléphone: {{phone}}\nAdresse: {{address}}\nCode postal: {{postalCode}}\nVille: {{city}}\nSujet: {{subject}}\n\nMessage:\n{{message}}`,
+    variables: ['reference', 'name', 'email', 'phone', 'address', 'postalCode', 'city', 'subject', 'message'],
   },
   {
     slug: 'contact-confirmation-client',
@@ -165,6 +168,9 @@ export class EmailTemplatesService {
     name: string;
     email: string;
     phone?: string | null;
+    address?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
     subject: string;
     message: string;
   }) {
