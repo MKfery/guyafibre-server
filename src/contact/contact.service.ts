@@ -8,10 +8,10 @@ export interface CreateContactDto {
   name: string;
   email: string;
   phone?: string;
+  subject: string;
   address?: string;
   postalCode?: string;
   city?: string;
-  subject: string;
   message: string;
 }
 
@@ -32,10 +32,10 @@ export class ContactService {
         name: data.name,
         email: data.email,
         phone: data.phone,
+        subject: data.subject,
         address: data.address,
         postalCode: data.postalCode,
         city: data.city,
-        subject: data.subject,
         message: data.message,
       },
     });
