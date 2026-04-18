@@ -56,6 +56,11 @@ export class CreateDevisDto {
   @IsOptional()
   address?: string;
 
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  postalCode?: string;
+
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
