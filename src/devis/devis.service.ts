@@ -40,6 +40,7 @@ export class DevisService {
         services: createDevisDto.services,
         location: createDevisDto.location,
         address: createDevisDto.address,
+        postalCode: createDevisDto.postalCode,
         description: createDevisDto.description,
         urgency: createDevisDto.urgency || 'NORMAL',
       },
