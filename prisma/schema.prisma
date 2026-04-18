@@ -78,6 +78,7 @@ model Devis {
   services    String[]
   location    String
   address     String?
+  postalCode  String?
   description String      @db.Text
   urgency     Urgency     @default(NORMAL)
 
@@ -222,9 +223,6 @@ model Contact {
   name      String
   email     String
   phone     String?
-  address   String?
-  postalCode String?
-  city      String?
   subject   String
   message   String   @db.Text
   isRead    Boolean  @default(false)
