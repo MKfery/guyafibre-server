@@ -79,8 +79,7 @@ export class StatsService {
       select: { amount: true },
     });
     const revenueEstimated = acceptedDevisWithAmount.reduce((sum, d) => {
-      const amount = parseFloat(d.amount?.replace(/[^\d.-]/g, '') || '0');
-      return sum + amount;
+      return sum + (d.amount ?? 0);  // amount est déjà un Float, pas besoin de parseFloat/replace
     }, 0);
 
     return {
