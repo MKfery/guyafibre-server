@@ -224,6 +224,9 @@ model Contact {
   email     String
   phone     String?
   subject   String
+  address   String?
+  postalCode String?
+  city      String?
   message   String   @db.Text
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
