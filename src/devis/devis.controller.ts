@@ -1,11 +1,20 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Request, HttpCode, HttpStatus, Res } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Response } from 'express';
 import { DevisService } from './devis.service';
-import { CreateDevisDto, UpdateDevisStatusDto, AddNoteDto, RespondDevisDto, DevisQueryDto } from './dto';
+import { 
+  CreateDevisDto, 
+  UpdateDevisStatusDto, 
+  AddNoteDto, 
+  RespondDevisDto, 
+  DevisQueryDto, 
+  UpdateAmountDto 
+} from './dto';
+
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { Role } from '@prisma/client';
 
 @ApiTags('Devis')
 @Controller('devis')
@@ -45,6 +54,19 @@ export class DevisController {
   @ApiOperation({ summary: 'Détail d\'un devis' })
   async findOne(@Param('id') id: string) {
     return this.devisService.findOne(id);
+  }
+
+  @Patch(':id/amount')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mettre à jour le montant d\'un devis' })
+  async updateAmount(
+    @Param('id') id: string,
+    @Body() updateAmountDto: UpdateAmountDto,
+    @Request() req: any,
+  ) {
+    const ipAddress = req.ip || req.connection?.remoteAddress;
+    return this.devisService.updateAmount(id, updateAmountDto.amount, req.user.id, ipAddress);
   }
 
   @Patch(':id/status')
@@ -101,7 +123,7 @@ export class DevisController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SUPER_ADMIN')
+  @Roles(Role.SUPER_ADMIN)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Supprimer un devis (SUPER_ADMIN uniquement)' })

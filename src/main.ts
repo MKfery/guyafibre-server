@@ -17,8 +17,11 @@ async function bootstrap() {
 
   // CORS
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const vercelUrl = process.env.VERCEL_URL || '';
+  const allowedOrigins = [frontendUrl, vercelUrl, 'https://guyafibre-frontend.vercel.app'].filter(Boolean);
+  
   app.enableCors({
-    origin: frontendUrl,
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -49,6 +52,5 @@ async function bootstrap() {
   const port = process.env.PORT || 4000;
   await app.listen(port);
   console.log(`🚀 Backend running on http://localhost:${port}`);
-  console.log(`📚 API Docs available at http://localhost:${port}/api/docs`);
 }
 bootstrap();

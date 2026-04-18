@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { PrismaService } from '../prisma/prisma.service';
 import { ActivityLogService } from '../logs/activity-log.service';
 import { EmailService } from '../email/email.service';
-import { CreateDevisDto, UpdateDevisStatusDto, AddNoteDto, RespondDevisDto, DevisQueryDto } from './dto';
+import { CreateDevisDto, UpdateDevisStatusDto, AddNoteDto, RespondDevisDto, DevisQueryDto, UpdateAmountDto } from './dto';
 
 @Injectable()
 export class DevisService {
@@ -13,12 +13,9 @@ export class DevisService {
   ) {}
 
   async create(createDevisDto: CreateDevisDto, ipAddress?: string) {
-    // Generate reference: DEV-YYYY-XXX
     const year = new Date().getFullYear();
     const lastDevis = await this.prisma.devis.findFirst({
-      where: {
-        reference: { startsWith: `DEV-${year}` },
-      },
+      where: { reference: { startsWith: `DEV-${year}` } },
       orderBy: { reference: 'desc' },
     });
 
@@ -46,7 +43,6 @@ export class DevisService {
       },
     });
 
-    // Log the action
     await this.activityLog.log({
       action: 'CREATE',
       entity: 'Devis',
@@ -55,7 +51,6 @@ export class DevisService {
       ipAddress,
     });
 
-    // Send confirmation email to client
     await this.emailService.sendDevisConfirmation({
       clientName: devis.clientName,
       clientEmail: devis.clientEmail,
@@ -63,7 +58,6 @@ export class DevisService {
       service: devis.services.join(', '),
     });
 
-    // Get admin email from settings or use default
     const adminEmail = process.env.ADMIN_EMAIL || 'contact@guyafibre.com';
     await this.emailService.sendDevisNotificationToAdmin({
       reference: devis.reference,
@@ -129,29 +123,46 @@ export class DevisService {
         },
         notes: {
           orderBy: { createdAt: 'desc' },
-          include: {
-            author: {
-              select: { id: true, firstName: true, lastName: true },
-            },
-          },
+          include: { author: { select: { id: true, firstName: true, lastName: true } } },
         },
         responses: {
           orderBy: { sentAt: 'desc' },
-          include: {
-            sentBy: {
-              select: { id: true, firstName: true, lastName: true },
-            },
-          },
+          include: { sentBy: { select: { id: true, firstName: true, lastName: true } } },
         },
       },
     });
+
+    if (!devis) throw new NotFoundException(`Le devis ${id} n'existe pas`);
+
+    return devis;
+  }
+
+  // ==================== NOUVELLE MÉTHODE POUR LE MONTANT ====================
+  async updateAmount(id: string, amount: number | undefined, userId: string, ipAddress?: string) {
+    const devis = await this.prisma.devis.findUnique({ where: { id } });
 
     if (!devis) {
       throw new NotFoundException(`Le devis ${id} n'existe pas`);
     }
 
-    return devis;
+    const updated = await this.prisma.devis.update({
+      where: { id },
+      data: { amount: amount ?? null },
+    });
+
+    await this.activityLog.log({
+      action: 'AMOUNT_UPDATE',
+      entity: 'Devis',
+      entityId: id,
+      description: `Montant mis à jour pour le devis ${devis.reference} : ${amount ? amount + ' €' : 'Non défini'}`,
+      metadata: { oldAmount: devis.amount, newAmount: amount },
+      userId,
+      ipAddress,
+    });
+
+    return updated;
   }
+  // ======================================================================
 
   async updateStatus(id: string, updateStatusDto: UpdateDevisStatusDto, userId: string, ipAddress?: string) {
     const devis = await this.prisma.devis.findUnique({ where: { id } });
@@ -162,7 +173,10 @@ export class DevisService {
 
     const updated = await this.prisma.devis.update({
       where: { id },
-      data: { status: updateStatusDto.status, amount: updateStatusDto.amount },
+      data: {
+        status: updateStatusDto.status,
+        amount: updateStatusDto.amount ?? devis.amount ?? null,
+      },
     });
 
     await this.activityLog.log({
@@ -181,9 +195,7 @@ export class DevisService {
   async addNote(id: string, addNoteDto: AddNoteDto, userId: string, ipAddress?: string) {
     const devis = await this.prisma.devis.findUnique({ where: { id } });
 
-    if (!devis) {
-      throw new NotFoundException(`Le devis ${id} n'existe pas`);
-    }
+    if (!devis) throw new NotFoundException(`Le devis ${id} n'existe pas`);
 
     const note = await this.prisma.devisNote.create({
       data: {
@@ -192,9 +204,7 @@ export class DevisService {
         authorId: userId,
       },
       include: {
-        author: {
-          select: { id: true, firstName: true, lastName: true },
-        },
+        author: { select: { id: true, firstName: true, lastName: true } },
       },
     });
 
@@ -213,11 +223,8 @@ export class DevisService {
   async respond(id: string, respondDevisDto: RespondDevisDto, userId: string, ipAddress?: string) {
     const devis = await this.prisma.devis.findUnique({ where: { id } });
 
-    if (!devis) {
-      throw new NotFoundException(`Le devis ${id} n'existe pas`);
-    }
+    if (!devis) throw new NotFoundException(`Le devis ${id} n'existe pas`);
 
-    // Create response record
     const response = await this.prisma.devisResponse.create({
       data: {
         subject: respondDevisDto.subject,
@@ -226,13 +233,10 @@ export class DevisService {
         sentById: userId,
       },
       include: {
-        sentBy: {
-          select: { id: true, firstName: true, lastName: true },
-        },
+        sentBy: { select: { id: true, firstName: true, lastName: true } },
       },
     });
 
-    // Send response email to client
     await this.emailService.sendDevisResponse({
       clientName: devis.clientName,
       clientEmail: devis.clientEmail,
@@ -271,51 +275,21 @@ export class DevisService {
     });
 
     const csv = [
-      'Référence,Client,Nom,Email,Téléphone,Services,Lieu,Statut,Urgence,Date',
+      'Référence,Client,Email,Téléphone,Services,Lieu,Statut,Urgence,Montant,Date',
       ...devis.map(d =>
-        `${d.reference},"${d.clientName}","${d.company || ''}","${d.clientEmail}","${d.clientPhone}","${d.services.join(';')}","${d.location}",${d.status},${d.urgency},${d.createdAt.toISOString()}`
+        `${d.reference},"${d.clientName}","${d.clientEmail}","${d.clientPhone}","${d.services.join(';')}","${d.location}",${d.status},${d.urgency},${d.amount || ''},${d.createdAt.toISOString()}`
       ),
     ].join('\n');
 
     return csv;
   }
 
-  async remove(id: string, userId: string, userRole: string, ipAddress?: string) {
-    if (userRole !== 'SUPER_ADMIN') {
-      throw new ForbiddenException('Seuls les SUPER_ADMIN peuvent supprimer des devis');
-    }
-
-    const devis = await this.prisma.devis.findUnique({ where: { id } });
-
-    if (!devis) {
-      throw new NotFoundException(`Le devis ${id} n'existe pas`);
-    }
-
-    await this.prisma.devis.delete({ where: { id } });
-
-    await this.activityLog.log({
-      action: 'DELETE',
-      entity: 'Devis',
-      entityId: id,
-      description: `Devis ${devis.reference} supprimé`,
-      userId,
-      ipAddress,
-    });
-
-    return { message: 'Devis supprimé avec succès' };
-  }
-
   async assign(id: string, assignedToId: string, userId: string, ipAddress?: string) {
     const devis = await this.prisma.devis.findUnique({ where: { id } });
-
-    if (!devis) {
-      throw new NotFoundException(`Le devis ${id} n'existe pas`);
-    }
+    if (!devis) throw new NotFoundException(`Le devis ${id} n'existe pas`);
 
     const user = await this.prisma.user.findUnique({ where: { id: assignedToId } });
-    if (!user) {
-      throw new NotFoundException('Utilisateur non trouvé');
-    }
+    if (!user) throw new NotFoundException('Utilisateur non trouvé');
 
     const updated = await this.prisma.devis.update({
       where: { id },
@@ -333,5 +307,27 @@ export class DevisService {
     });
 
     return updated;
+  }
+
+  async remove(id: string, userId: string, userRole: string, ipAddress?: string) {
+    if (userRole !== 'SUPER_ADMIN') {
+      throw new ForbiddenException('Seuls les SUPER_ADMIN peuvent supprimer des devis');
+    }
+
+    const devis = await this.prisma.devis.findUnique({ where: { id } });
+    if (!devis) throw new NotFoundException(`Le devis ${id} n'existe pas`);
+
+    await this.prisma.devis.delete({ where: { id } });
+
+    await this.activityLog.log({
+      action: 'DELETE',
+      entity: 'Devis',
+      entityId: id,
+      description: `Devis ${devis.reference} supprimé`,
+      userId,
+      ipAddress,
+    });
+
+    return { message: 'Devis supprimé avec succès' };
   }
 }

@@ -63,18 +63,15 @@ model User {
   emailTemplatesUpdated EmailTemplate[] @relation("TemplateUpdatedBy")
   activityLogs     ActivityLog[]   @relation("LogUser")
 }
-
 model Devis {
   id          String      @id @default(cuid())
   reference   String      @unique
 
-  // Informations client
   clientName  String
   clientEmail String
   clientPhone String
   company     String?
 
-  // Demande
   services    String[]
   location    String
   address     String?
@@ -82,12 +79,11 @@ model Devis {
   description String      @db.Text
   urgency     Urgency     @default(NORMAL)
 
-  // Traitement
   status      DevisStatus @default(NEW)
-  amount      String?
+  amount      Float?      
   notes       DevisNote[]     @relation("DevisNotes")
   responses   DevisResponse[] @relation("DevisResponses")
-  assignedTo  User?       @relation("AssignedTo", fields: [assignedToId], references: [id])
+  assignedTo  User?           @relation("AssignedTo", fields: [assignedToId], references: [id])
   assignedToId String?
 
   createdAt   DateTime    @default(now())

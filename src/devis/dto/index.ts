@@ -1,6 +1,6 @@
-import { IsString, IsEmail, IsNotEmpty, IsArray, IsOptional, IsEnum, MinLength } from 'class-validator';
+import { IsString, IsEmail, IsNotEmpty, IsArray, IsOptional, IsEnum, MinLength, IsNumber } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type, Transform } from 'class-transformer';
+import { Type } from 'class-transformer';
 
 export enum DevisStatus {
   NEW = 'NEW',
@@ -19,22 +19,23 @@ export enum Urgency {
   URGENT = 'URGENT',
 }
 
+// ==================== DTO EXISTANTS ====================
 export class CreateDevisDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  clientName: string;
+  clientName!: string;
 
   @ApiProperty()
   @IsEmail()
   @IsNotEmpty()
-  clientEmail: string;
+  clientEmail!: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
   @MinLength(8)
-  clientPhone: string;
+  clientPhone!: string;
 
   @ApiPropertyOptional()
   @IsString()
@@ -44,12 +45,12 @@ export class CreateDevisDto {
   @ApiProperty({ type: [String] })
   @IsArray()
   @IsString({ each: true })
-  services: string[];
+  services!: string[];
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  location: string;
+  location!: string;
 
   @ApiPropertyOptional()
   @IsString()
@@ -64,14 +65,14 @@ export class CreateDevisDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  description: string;
+  description!: string;
 
   @ApiPropertyOptional({ enum: Urgency })
   @IsEnum(Urgency)
   @IsOptional()
   urgency?: Urgency;
 
-  // Honeypot field for anti-spam
+  // Honeypot anti-spam
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
@@ -81,31 +82,31 @@ export class CreateDevisDto {
 export class UpdateDevisStatusDto {
   @ApiProperty({ enum: DevisStatus })
   @IsEnum(DevisStatus)
-  status: DevisStatus;
+  status!: DevisStatus;
 
   @ApiPropertyOptional()
-  @IsString()
+  @IsNumber()
   @IsOptional()
-  amount?: string;
+  amount?: number;
 }
 
 export class AddNoteDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  content: string;
+  content!: string;
 }
 
 export class RespondDevisDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  subject: string;
+  subject!: string;
 
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  body: string;
+  body!: string;
 }
 
 export class DevisQueryDto {
@@ -149,3 +150,6 @@ export class DevisQueryDto {
   @IsString()
   endDate?: string;
 }
+
+// ==================== NOUVEAU DTO POUR LE MONTANT ====================
+export { UpdateAmountDto } from './update-amount.dto';
